@@ -38,6 +38,7 @@
                     <h6 class="collapse-header">Menu</h6>
                     <a class="collapse-item" href="product.php">Product (Join table)</a>
                     <a class="collapse-item" href="province.php">Province (Split page)</a>
+                    <a class="collapse-item" href="alldistrict.php">All District (Datatable)</a>
                     <a class="collapse-item" href="#">Stock</a>
                     <a class="collapse-item" href="#">Category</a>
                     <a class=" collapse-item" href="#">Report</a>

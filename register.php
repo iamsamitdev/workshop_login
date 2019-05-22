@@ -8,7 +8,7 @@ if (@$_POST['submit']) {
         ':user_fullname'   => $_POST['user_fullname'],
         ':user_email'        => $_POST['user_email'],
         ':user_password' => password_hash($_POST['user_password'], PASSWORD_DEFAULT),
-        ':user_imgprofile' => 'nopic.jpg',
+        ':user_imgprofile' => 'nopic.png',
         ':user_role'          => 'user',
         ':user_created_at' => date('Y-m-d H:i:s'),
         ':user_status'      => '1'
