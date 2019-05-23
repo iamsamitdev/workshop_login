@@ -5,6 +5,10 @@ if (empty($_SESSION['session_login'])) {
     header('location:login.php');
 }
 
+//echo time();
+//echo "<br>";
+//echo rand(100000, 999999);
+
 // อัพเดท profile
 $msg = "";
 if (@$_POST['submit']) {
@@ -12,12 +16,18 @@ if (@$_POST['submit']) {
     $user_fullname      = $_POST['user_fullname'];
     $user_email           = $_POST['user_email'];
     $user_imgprofile    = $_FILES['user_imgprofile']['name'];
+    $user_province      = $_POST['user_province'];
+
+    // echo $user_province;
 
     // อัพโหลดไฟล์ด้วย php
     if (!empty($user_imgprofile)) {
 
         $inputname = "user_imgprofile";
         $filename = $_FILES['user_imgprofile']['name'];
+        $filename_explode = explode(".", $_FILES['user_imgprofile']['name']);
+        $new_filename = time() . "." . $filename_explode[1];
+
         $filesize = $_FILES['user_imgprofile']['size'];
         $filetmp = $_FILES['user_imgprofile']['tmp_name'];
         $filetype = $_FILES['user_imgprofile']['type'];
@@ -28,7 +38,7 @@ if (@$_POST['submit']) {
         $thumbheight = "300";
         genius_uploadimg(
             $inputname,
-            $filename,
+            $new_filename,
             $filesize,
             $filetmp,
             $filetype,
@@ -39,8 +49,37 @@ if (@$_POST['submit']) {
             $thumbheight
         );
 
+        $sql = "UPDATE users SET 
+                                user_fullname=:user_fullname, 
+                                user_email=:user_email,
+                                user_imgprofile=:user_imgprofile,
+                                user_province=:user_province 
+                                WHERE user_email='$_SESSION[session_login]'";
+        $query = $connect->prepare($sql);
+        $query->bindParam(':user_fullname', $user_fullname);
+        $query->bindParam(':user_email', $user_email);
+        $query->bindParam(':user_imgprofile', $new_filename);
+        $query->bindParam(':user_province', $user_province);
+        $query->execute();
+
+        // Update Session When change email
+        $_SESSION['session_login'] = $user_email;
+
         //$upload_path = "img/";
         //copy($_FILES['user_imgprofile']['tmp_name'], $upload_path . $_FILES['user_imgprofile']['name']);
+    } else {
+        $sql = "UPDATE users SET 
+                                user_fullname=:user_fullname, 
+                                user_email=:user_email,
+                                user_province=:user_province 
+                                WHERE user_email='$_SESSION[session_login]'";
+        $query = $connect->prepare($sql);
+        $query->bindParam(':user_fullname', $user_fullname);
+        $query->bindParam(':user_email', $user_email);
+        $query->bindParam(':user_province', $user_province);
+        $query->execute();
+
+        $_SESSION['session_login'] = $user_email;
     }
 }
 
@@ -48,6 +87,13 @@ $sql_profile = "SELECT * FROM users WHERE user_email='$_SESSION[session_login]'"
 $result_profile = $connect->query($sql_profile);
 $result_profile->execute();
 $users_profile = $result_profile->fetch();
+
+// ดึงข้อมูลรายการจังหวัดจาก tbl_provine ออกมาแสดง
+$sql_province = "SELECT province_id,province_name FROM tbl_provinces";
+$result_province = $connect->query($sql_province);
+$result_province->execute();
+
+//print_r($result_province->fetch(PDO::FETCH_ASSOC));
 
 ?>
 <!DOCTYPE html>
@@ -69,6 +115,9 @@ $users_profile = $result_profile->fetch();
 
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- Select 2 for dropdown filter-->
+    <link rel="stylesheet" href="Select2/css/select2.min.css">
 
 </head>
 
@@ -97,6 +146,23 @@ $users_profile = $result_profile->fetch();
                             <label for="user_email" class="col-sm-2 col-form-label">Email</label>
                             <div class="col-sm-10">
                                 <input type="text" class="form-control" name="user_email" id="user_email" value="<?php echo $users_profile['user_email']; ?>">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="user_province" class="col-sm-2 col-form-label">Province</label>
+                            <div class="col-sm-10">
+                                <select name="user_province" id="user_province" class="form-control province_list" required>
+                                    <option value=""></option>
+                                    <?php
+                                    while ($rs = $result_province->fetch(PDO::FETCH_ASSOC)) {
+                                        if ($users_profile['user_province'] == $rs['province_id']) {
+                                            echo "<option value='" . $rs['province_id'] . "' selected>" . $rs['province_name'] . "</option>";
+                                        } else {
+                                            echo "<option value='" . $rs['province_id'] . "'>" . $rs['province_name'] . "</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
                             </div>
                         </div>
                         <div class="form-group row">
@@ -129,6 +195,20 @@ $users_profile = $result_profile->fetch();
 
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
+
+    <!-- Select 2 for filter dropdown list-->
+    <script src="Select2/js/select2.min.js"></script>
+    <script src="Select2/js/i18n/th.js"></script>
+
+    <script>
+        $(function() {
+            $('.province_list').select2({
+                language: "th",
+                placeholder: "กรุณาเลือกจังหวัด",
+                // minimumInputLength: 3
+            });
+        });
+    </script>
 
 </body>
 
